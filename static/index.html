@@ -32,24 +32,16 @@ var W = canvas.width  = window.innerWidth-6;
 var H = canvas.height = window.innerHeight-50;
 
 
-function sendJSONXMLHTTPRequest(url, objects, callback) {
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState==4) {
-            try {
-                if (xhr.status==200) {
-                    //XXX: parse some JSON from the request!
-                    //XXX: Pass the data to the callback!
-                }
-            } 
-            catch(e) {
-                alert('Error: ' + e.name);
-            }
-        }
-    };
-    //XXX: POST to a URL
-    //XXX: set the mimetype and the accept headers!
-    // Remember to use application/json !
+function sendJSONHTTPRequest(url, data) {
+    fetch(url, {
+        method: "POST", 
+        headers: {
+            "Content-Type": "application/json", 
+            "Accept": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json());
 }
 
 
@@ -138,6 +130,8 @@ function addEntity(entity, data) {
     world[entity] = data;
     drawNextFrame(); // (but should we?)
     //XXX: Send a XHTML Request that updates the entity you just  modified!
+    var postURL = '/entity/' + entity;
+    sendJSONHTTPRequest(postURL, data)
 
 }
 
@@ -255,7 +249,7 @@ mouse.mouseuppers.push(function(x,y,clicked,e) {
 });
 
 mouse.mousedraggers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'green',
+    addEntityWithoutName({'x':x,'y':y,'colour':'yellow',
                           'radius':10});
 });
 
@@ -263,10 +257,18 @@ mouse.mousedraggers.push(function(x,y,clicked,e) {
 function update() {
     //XXX: TODO Get the world from the webservice using a XMLHTTPRequest
     drawFrame();
+    fetch("/world")
+    .then(response => response.json())
+    .then(data => {
+        // console.log(data);
+        world = data; //Update the world
+        // drawNext = true; //Need to draw the new frame
+        drawNextFrame();
+    });
 }
 
 // 30 frames per second
-setInterval( update, 1000/30.0);
+setInterval( update, 1000/60.0);
 
 
 
